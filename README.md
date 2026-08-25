@@ -75,11 +75,12 @@ Two purpose-built fact tables, pre-computed for Power BI Import Mode:
    - Surfaces the **$97.24K unrealised revenue** figure — a documented, table-backed number, not an estimate
 
 ### Ad-Hoc Executive Analytics
-4 stakeholder-driven queries using `RANK()`, `LAG()`, and `CASE` window functions:
-- Top 5 transit bottleneck lanes (VP of Logistics)
+Stakeholder-driven queries using `RANK()`, `LAG()`, and `CASE` window functions:
+- Top 5 transit bottleneck lanes, deduplicated to order-grain first (VP of Logistics)
+- National transit baseline vs. worst regional outlier, same dedup applied (VP of Logistics)
 - Top 5 revenue-generating categories (CMO)
 - #1 product vertical per state (VP of Sales)
-- Month-over-Month revenue growth velocity (CFO)
+- Month-over-Month revenue growth velocity, guarded against a null first-month comparison (CFO)
 
 ---
 

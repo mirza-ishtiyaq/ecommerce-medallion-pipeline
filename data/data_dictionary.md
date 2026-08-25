@@ -126,7 +126,7 @@ All other Silver tables (`olist_customers`, `olist_order_items`, `olist_sellers`
 | `order_purchase_timestamp` | `silver.olist_orders` | When the order was originally placed |
 | `lost_item_revenue` | `silver.olist_order_items.price` | Revenue that was never realized — `COALESCE(price, 0)` |
 
-> **Total unrealized revenue:** **$97.24K** trapped in canceled/unavailable order states — **8.12%** of a **$1.20M** gross pipeline. This is the figure cited on my resume.
+> **Total unrealized revenue:** **$97.24K** trapped in canceled/unavailable order states — **8.12%** of a **$1.20M** gross pipeline.
 
 ---
 
@@ -137,6 +137,6 @@ All other Silver tables (`olist_customers`, `olist_order_items`, `olist_sellers`
 | **Unrealized revenue** | $97,240 | `SUM(lost_item_revenue)` from `gold.lost_revenue` |
 | **Gross pipeline** | $1.20M | `SUM(price)` from all delivered orders |
 | **Leakage rate** | 8.12% | $97.24K / $1.20M |
-| **National transit baseline** | 12.3 days | `AVG(actual_delivery_days)` from `gold.master_operations` |
-| **Worst regional outlier** | 26 days | Rondônia (`RO`) — corrected from original mislabeling as Roraima (`RR`) |
-| **Late delivery rate** | Varies by lane | `delivery_status = 'Late'` percentage per origin-destination pair |
+| **National transit baseline** | 12.3 days | `AVG(actual_delivery_days)`, deduplicated to one row per `order_id` first — see Request 1b in `04_executive_adhoc_analysis.sql`. `master_operations` is item-grain (one row per order line-item), so this can't be averaged directly without overweighting multi-item orders. |
+| **Worst regional outlier** | 26 days | Rondônia (`RO`) — corrected from original mislabeling as Roraima (`RR`); also computed on the deduplicated order-grain population |
+| **Late delivery rate** | Varies by lane | `delivery_status = 'Late'` percentage per origin-destination pair, same order-grain dedup applied in Request 1 |

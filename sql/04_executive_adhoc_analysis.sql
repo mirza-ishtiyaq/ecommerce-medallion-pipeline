@@ -7,15 +7,53 @@
 -- --------------------------------------------------------------------
 -- REQUEST 1 (VP OF LOGISTICS): Identify Top 5 Transit Bottleneck Lanes
 -- --------------------------------------------------------------------
+-- master_operations is item-grain (one row per order line-item, via the
+-- LEFT JOIN to olist_order_items in 03_gold_star_schema.sql), but
+-- delivery_status and actual_delivery_days are order-level values
+-- repeated across every item row of the same order. Aggregating the raw
+-- table directly overweights multi-item orders in both total_orders and
+-- late_percentage. order_delivery_dedup collapses back to one row per
+-- order before the lane-level aggregation below.
+WITH order_delivery_dedup AS (
+    SELECT DISTINCT
+        order_id,
+        origin_state,
+        destination_state,
+        delivery_status,
+        actual_delivery_days
+    FROM ecommerce_logistics.gold.master_operations
+)
 SELECT
     origin_state,
     destination_state,
-    COUNT(order_id) AS total_orders,
-    ROUND((SUM(CASE WHEN delivery_status = 'Late' THEN 1 ELSE 0 END) * 100) / COUNT(*), 2) AS late_percentage
-FROM ecommerce_logistics.gold.master_operations
+    COUNT(DISTINCT order_id) AS total_orders,
+    ROUND(AVG(actual_delivery_days), 1) AS avg_delivery_days,
+    ROUND((SUM(CASE WHEN delivery_status = 'Late' THEN 1 ELSE 0 END) * 100.0) / COUNT(*), 2) AS late_percentage
+FROM order_delivery_dedup
 GROUP BY origin_state, destination_state
-HAVING total_orders >= 50
+HAVING COUNT(DISTINCT order_id) >= 50
 ORDER BY late_percentage DESC
+LIMIT 5;
+
+-- --------------------------------------------------------------------
+-- REQUEST 1b (VP OF LOGISTICS): National Baseline vs. Regional Outlier
+-- --------------------------------------------------------------------
+-- The runnable source of the README's "26-day regional outlier vs
+-- 12.3-day national baseline" figure -- on the same deduplicated,
+-- order-grain population as Request 1 above, not the raw fanned-out table.
+WITH order_delivery_dedup AS (
+    SELECT DISTINCT order_id, destination_state, actual_delivery_days
+    FROM ecommerce_logistics.gold.master_operations
+)
+SELECT
+    destination_state,
+    COUNT(DISTINCT order_id) AS total_orders,
+    ROUND(AVG(actual_delivery_days), 1) AS avg_delivery_days,
+    ROUND((SELECT AVG(actual_delivery_days) FROM order_delivery_dedup), 1) AS national_avg_delivery_days
+FROM order_delivery_dedup
+GROUP BY destination_state
+HAVING COUNT(DISTINCT order_id) >= 50
+ORDER BY avg_delivery_days DESC
 LIMIT 5;
 
 -- --------------------------------------------------------------------
@@ -75,6 +113,9 @@ SELECT
     financial_month,
     current_month_revenue,
     previous_month_revenue,
-    ROUND(((current_month_revenue - previous_month_revenue) / previous_month_revenue * 100), 2) AS mom_growth_percentage
+    -- NULLIF guards the first month in the series, where LAG() has no prior
+    -- row: previous_month_revenue is NULL there, so growth% is reported as
+    -- NULL (no comparable prior month) instead of erroring on a NULL divisor.
+    ROUND(((current_month_revenue - previous_month_revenue) / NULLIF(previous_month_revenue, 0) * 100), 2) AS mom_growth_percentage
 FROM monthly_revenue_ledger
 ORDER BY financial_month;
