@@ -2,12 +2,7 @@
 
 ![Star Schema Data Model](./docs/images/data_model.png)
 
-> **Resume Metrics Alignment**
-> This repository is the source of truth for the following resume claims:
-> - **$97.24K in unrealised revenue** surfaced — 8.12% of a $1.20M gross fulfilment pipeline
-> - **26-day regional transit outlier** (Rondônia) isolated against a 12.3-day national baseline
-> - **Medallion Architecture** (Bronze → Silver → Gold) on **Databricks / Delta Lake**
-> - **Star-schema** fact tables with pre-computed **OTIF / SLA delivery flags** pushed upstream of Power BI
+A Databricks/Delta Lake medallion pipeline (Bronze → Silver → Gold) that pushes SLA and revenue-leakage logic upstream of Power BI, surfacing $97.24K in unrealised revenue and a 26-day regional transit outlier out of ~99K real Olist orders.
 
 ---
 
@@ -77,7 +72,7 @@ Two purpose-built fact tables, pre-computed for Power BI Import Mode:
 
 2. **`lost_revenue`** — Financial leakage fact table
    - Isolates `canceled` and `unavailable` orders with their associated `price` values
-   - Surfaces the **$97.24K unrealised revenue** figure cited on my resume
+   - Surfaces the **$97.24K unrealised revenue** figure — a documented, table-backed number, not an estimate
 
 ### Ad-Hoc Executive Analytics
 4 stakeholder-driven queries using `RANK()`, `LAG()`, and `CASE` window functions:
@@ -174,4 +169,5 @@ ecommerce-medallion-pipeline/
 
 **Author:** Mirza Ishtiyaq Baig — Data Analyst, Supply Chain & Service Operations Analytics
 **LinkedIn:** [linkedin.com/in/mirzaishtiyaqbaig](https://www.linkedin.com/in/mirzaishtiyaqbaig/)
+**Email:** mirzaishtiyaqbaig1@gmail.com
 **GitHub:** [github.com/mirza-ishtiyaq](https://github.com/mirza-ishtiyaq)
